@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# custom
+training/*
+!training/.gitkeep
+validation/*
+!validation/.gitkeep
+output/*
+!output/.gitkeep
