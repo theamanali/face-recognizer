@@ -10,13 +10,14 @@ import face_recognition
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
 BOUNDING_BOX_COLOR = "red"
 TEXT_COLOR = "black"
+MODEL_NAME = "hog"
 
 Path("training").mkdir(exist_ok=True)
 Path("output").mkdir(exist_ok=True)
 Path("validation").mkdir(exist_ok=True)
 
 # use to train model
-def encode_known_faces(model: str = "hog", encodings_location: Path = DEFAULT_ENCODINGS_PATH) -> None:
+def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAULT_ENCODINGS_PATH) -> None:
     names = []
     encodings = []
 
@@ -44,7 +45,7 @@ def _convert_name(name: str) -> str:
 
 # recognize image
 def recognize_faces(image_location: str,
-                    model: str = "hog",
+                    model: str = MODEL_NAME,
                     encodings_location: Path = DEFAULT_ENCODINGS_PATH
                     ) -> None:
     with encodings_location.open("rb") as f:
@@ -99,8 +100,9 @@ def _recognize_face(unknown_encoding, loaded_encodings):
 
     if votes:
         return votes.most_common(1)[0][0]
+    return None
 
-def validate(model: str = "hog"):
+def validate(model: str = MODEL_NAME):
     for filepath in Path("validation").rglob("*"):
         if filepath.is_file():
             recognize_faces(
@@ -108,18 +110,18 @@ def validate(model: str = "hog"):
             )
 
 def recognize_video(
-    model: str = "hog",
+    model: str = MODEL_NAME,
     encodings_location: Path = DEFAULT_ENCODINGS_PATH,
     source=0,  # 0 = webcam, or pass video file path
-    process_every_n_frames: int = 3,
-    recognition_scale: float = 0.5,
+    process_every_n_frames: int = 4,
+    recognition_scale: float = 1,
 ):
     with encodings_location.open("rb") as f:
         loaded_encodings = pickle.load(f)
 
     video_capture = cv2.VideoCapture(source)
-    video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+    video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     video_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     frame_count = 0

@@ -213,3 +213,4 @@ validation/*
 !validation/.gitkeep
 output/*
 !output/.gitkeep
+.DS_Store
