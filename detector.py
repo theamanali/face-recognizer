@@ -1,23 +1,45 @@
 # detector.py
-
 from pathlib import Path
 from collections import Counter
 from PIL import Image, ImageDraw
 import cv2
 import pickle
 import face_recognition
+import argparse
+
+parser = argparse.ArgumentParser(description="Recognize faces in an image")
+parser.add_argument("--train", action="store_true", help="Train on input data")
+parser.add_argument(
+    "--validate", action="store_true", help="Validate trained model"
+)
+parser.add_argument(
+    "--image", action="store_true", help="Test the model with an unknown image"
+)
+parser.add_argument(
+    "--webcam", action="store_true", help="Test the model with a webcam"
+)
+parser.add_argument(
+    "-m",
+    action="store",
+    default="hog",
+    choices=["hog", "cnn"],
+    help="Which model to use for training: hog (CPU), cnn (GPU)",
+)
+parser.add_argument(
+    "-f", action="store", help="Path to an image with an unknown face"
+)
+args = parser.parse_args()
 
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
 BOUNDING_BOX_COLOR = "red"
 TEXT_COLOR = "black"
-MODEL_NAME = "hog"
 
 Path("training").mkdir(exist_ok=True)
 Path("output").mkdir(exist_ok=True)
 Path("validation").mkdir(exist_ok=True)
 
 # use to train model
-def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAULT_ENCODINGS_PATH) -> None:
+def encode_known_faces(model: str = args.m, encodings_location: Path = DEFAULT_ENCODINGS_PATH) -> None:
     names = []
     encodings = []
 
@@ -45,7 +67,7 @@ def _convert_name(name: str) -> str:
 
 # recognize image
 def recognize_faces(image_location: str,
-                    model: str = MODEL_NAME,
+                    model: str = args.m,
                     encodings_location: Path = DEFAULT_ENCODINGS_PATH
                     ) -> None:
     with encodings_location.open("rb") as f:
@@ -102,7 +124,7 @@ def _recognize_face(unknown_encoding, loaded_encodings):
         return votes.most_common(1)[0][0]
     return None
 
-def validate(model: str = MODEL_NAME):
+def validate(model: str = args.m):
     for filepath in Path("validation").rglob("*"):
         if filepath.is_file():
             recognize_faces(
@@ -110,11 +132,11 @@ def validate(model: str = MODEL_NAME):
             )
 
 def recognize_video(
-    model: str = MODEL_NAME,
+    model: str = args.m,
     encodings_location: Path = DEFAULT_ENCODINGS_PATH,
     source=0,  # 0 = webcam, or pass video file path
     process_every_n_frames: int = 4,
-    recognition_scale: float = 1,
+    recognition_scale: float = 0.75,
 ):
     with encodings_location.open("rb") as f:
         loaded_encodings = pickle.load(f)
@@ -127,7 +149,7 @@ def recognize_video(
     frame_count = 0
     detected_face_locations = []
     detected_face_names = []
-    scale_back = int(1 / recognition_scale) if recognition_scale > 0 else 4
+    scale_back = 1.0 / recognition_scale
 
     while True:
         ret, frame = video_capture.read()
@@ -157,10 +179,10 @@ def recognize_video(
 
                 detected_face_locations.append(
                     (
-                        top * scale_back,
-                        right * scale_back,
-                        bottom * scale_back,
-                        left * scale_back,
+                        int(top * scale_back),
+                        int(right * scale_back),
+                        int(bottom * scale_back),
+                        int(left * scale_back),
                     )
                 )
                 detected_face_names.append(name)
@@ -187,4 +209,16 @@ def recognize_video(
     video_capture.release()
     cv2.destroyAllWindows()
 
-recognize_video()
+def main():
+    print("Hello")
+    if args.train:
+        encode_known_faces(model=args.m)
+    if args.validate:
+        validate(model=args.m)
+    if args.image:
+        recognize_faces(image_location=args.f, model=args.m)
+    if args.webcam:
+        recognize_video()
+
+if __name__ == "__main__":
+    main()
