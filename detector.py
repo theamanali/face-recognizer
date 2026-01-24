@@ -6,6 +6,7 @@ import cv2
 import pickle
 import face_recognition
 import argparse
+import time
 
 MODEL_NAME = "hog"
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
@@ -114,7 +115,7 @@ def recognize_video(
     encodings_location: Path = DEFAULT_ENCODINGS_PATH,
     source=0,  # 0 = webcam, or pass video file path
     process_every_n_frames: int = 4,
-    recognition_scale: float = 0.75,
+    recognition_scale: float = 0.25,
 ):
     with encodings_location.open("rb") as f:
         loaded_encodings = pickle.load(f)
@@ -129,19 +130,27 @@ def recognize_video(
     detected_face_names = []
     scale_back = 1.0 / recognition_scale
 
+    start_time = time.time()
+    frame_counter = 0
+    processing_times = []
+
     while True:
         ret, frame = video_capture.read()
         if not ret:
             break
 
         frame_count += 1
+        frame_counter += 1
         if frame_count % process_every_n_frames == 0:
+            frame_start = time.time()
+
             small_frame = cv2.resize(
                 frame,
                 (0, 0),
                 fx=recognition_scale,
                 fy=recognition_scale,
             )
+
             rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
             face_locations = face_recognition.face_locations(rgb_small_frame, model=model)
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
@@ -165,6 +174,9 @@ def recognize_video(
                 )
                 detected_face_names.append(name)
 
+            frame_end = time.time()
+            processing_times.append(frame_end - frame_start)
+
         for (top, right, bottom, left), name in zip(
             detected_face_locations, detected_face_names
         ):
@@ -183,6 +195,16 @@ def recognize_video(
         cv2.imshow("Video Face Recognition", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
+
+    total_time = time.time() - start_time
+    fps = frame_counter / total_time
+    avg_processing_time = sum(processing_times) / len(processing_times)
+
+    print("\n=== Performance Metrics ===")
+    print(f"Total Runtime: {total_time:.2f} seconds")
+    print(f"Total Frames: {frame_counter}")
+    print(f"Average FPS: {fps:.2f}")
+    print(f"Average Frame Processing Time: {avg_processing_time:.4f} seconds")
 
     video_capture.release()
     cv2.destroyAllWindows()
