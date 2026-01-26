@@ -2,6 +2,8 @@
 
 A Python CLI for training and running face recognition with `face_recognition`, `dlib`, and `OpenCV`. 
 
+![Webcam Demo](/media/demo.gif)
+
 ## Features
 
 - Train encodings from labeled images (`training/<person_name>/...`)
