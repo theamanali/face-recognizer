@@ -33,6 +33,9 @@ def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAU
             names.append(name)
             encodings.append(encoding)
 
+    if not encodings:
+        raise ValueError("No faces found in training images.")
+
     name_encodings = {"names": names, "encodings": encodings}
 
     with encodings_location.open("wb") as f:
