@@ -1,14 +1,13 @@
 # Face Recognizer
 
-Face Recognizer is a Python command-line application for training and running
-face recognition using `face_recognition`, `dlib`, and OpenCV.
+A Python CLI for training and running face recognition with `face_recognition`, `dlib`, and `OpenCV`. 
 
 ## Capabilities
 
-- Build encodings from labeled training images.
-- Recognize faces in a single image.
-- Batch-validate images from a validation directory.
-- Run real-time webcam recognition with configurable performance controls.
+- **Train encodings** from labeled images (`training/<person_name>/...`)
+- **Validate** model accuracy against a set of images in `validation/`
+- **Recognize faces** in a single image
+- **Run video recognition** with tunable performance controls
 
 ## Repository Structure
 
@@ -43,52 +42,97 @@ pip install -r requirements.txt
 2. Train encodings:
 
 ```bash
-python detector.py --train --model hog
+python detector.py --train
 ```
 
 3. Run recognition:
 
 ```bash
-python detector.py --image path/to/image.jpg --tolerance 0.5
+python detector.py --image path/to/image.jpg
 ```
 
-## Command Reference
+## CLI Interface
 
-Show help:
+Show all flags:
 
 ```bash
 python detector.py --help
 ```
 
-Train:
+### Main Modes
+
+ `--train` : Build encodings from labeled images in `training/<person_name>/` and write them to `output/encodings.pkl`.
+Usage: 
 
 ```bash
 python detector.py --train --model hog
 ```
 
-Validate:
+Optional flags:
+
+`--model <hog|cnn>`
+
+Default: `hog`
+
+Purpose: Face detection backend for encoding. `hog` is faster on CPU, `cnn` is typically more accurate but slower.
+
+`--image <path>`
+
+Recognize faces in a single image.
+
+```bash
+python detector.py --image path/to/image.jpg --tolerance 0.5
+```
+
+Optional flags:
+
+`--tolerance <float>`
+
+Default: `0.6`
+
+Range: `0 < value <= 1`
+
+Purpose: Face match threshold. Lower is stricter, higher is looser.
+
+`--validate`
+
+Run recognition on every image in `validation/` (useful for quick checks).
 
 ```bash
 python detector.py --validate --tolerance 0.5
 ```
 
-Webcam:
+Optional flags:
+
+`--tolerance <float>` (same as `--image`)
+
+`--webcam`
+
+Run real-time recognition using your default camera.
 
 ```bash
 python detector.py --webcam --tolerance 0.5 --detection-interval 4 --recognition-scale 0.25
 ```
 
-## Flag Constraints
+Optional flags:
 
-- `--model` is valid only with `--train`.
-- `--tolerance` is valid with `--image`, `--validate`, or `--webcam`.
-- `--detection-interval` and `--recognition-scale` are valid only with `--webcam`.
+`--tolerance <float>` (same as `--image`)
 
-Validation ranges when provided:
+`--detection-interval <int>`
 
-- `--tolerance`: `0 < value <= 1`
-- `--detection-interval`: `value >= 1`
-- `--recognition-scale`: `0 < value <= 1`
+Default: `5`
+
+Range: `value >= 1`
+
+Purpose: Detect faces every N frames and reuse locations in between. Higher values improve FPS but can miss fast movement.
+
+`--recognition-scale <float>`
+
+Default: `0.25`
+
+Range: `0 < value <= 1`
+
+Purpose: Downscale frames before recognition for speed. Lower values are faster but reduce accuracy on small or distant faces.
 
 ## Operational Notes
 
