@@ -67,7 +67,7 @@ python detector.py --help
    - Optional flags:
 
      - `--model <hog|cnn>`: 
-Face detection backend for encoding. Default is `hog`. `hog` is faster on CPU, `cnn` is typically more accurate but much slower.
+Face detection backend for encoding. Default is `hog`. `hog` is faster on CPU, `cnn` is typically more accurate but much slower. Recommended only on systems with dedicated GPU. 
 
 
 2. `--image <path>`: Recognize faces in a single image.
