@@ -3,6 +3,7 @@
 A Python CLI for training and running face recognition with `face_recognition`, `dlib`, and `OpenCV`. 
 
 ![Webcam Demo](/media/demo.gif)
+
 Demo run with:
 - Recognition scale: 0.25
 - Detection interval: 4
