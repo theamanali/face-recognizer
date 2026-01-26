@@ -8,6 +8,7 @@ import face_recognition
 import argparse
 import time
 from typing import Optional
+from tqdm import tqdm
 
 MODEL_NAME = "hog"
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
@@ -23,7 +24,8 @@ def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAU
     names = []
     encodings = []
 
-    for path in Path("training").glob("*/*"):
+    training_paths = sorted(Path("training").glob("*/*"))
+    for path in tqdm(training_paths, desc="Encoding faces", unit="image"):
         name = _convert_name(path.parent.name)
         image = face_recognition.load_image_file(path)
 
@@ -249,19 +251,21 @@ def main():
         "--model",
         choices=["hog", "cnn"],
         default=None,
-        help=f"Face detection model. Training default is '{MODEL_NAME}'. "
-             "Recognition/validation/webcam must match training model.",
+        help=f"Face detection model for training only. Default is '{MODEL_NAME}'.",
     )
     args = parser.parse_args()
+
+    if args.model and not args.train:
+        parser.error("--model can only be used with --train.")
 
     if args.train:
         encode_known_faces(model=args.model or MODEL_NAME)
     if args.validate:
-        validate(model=args.model)
+        validate()
     if args.image:
-        recognize_faces(image_location=args.image, model=args.model)
+        recognize_faces(image_location=args.image)
     if args.webcam:
-        recognize_video(model=args.model)
+        recognize_video()
 
 if __name__ == "__main__":
     main()
