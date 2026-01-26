@@ -7,6 +7,7 @@ import pickle
 import face_recognition
 import argparse
 import time
+from typing import Optional
 
 MODEL_NAME = "hog"
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
@@ -36,7 +37,7 @@ def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAU
     if not encodings:
         raise ValueError("No faces found in training images.")
 
-    name_encodings = {"names": names, "encodings": encodings}
+    name_encodings = {"names": names, "encodings": encodings, "model": model}
 
     with encodings_location.open("wb") as f:
         pickle.dump(name_encodings, f)
@@ -48,11 +49,12 @@ def _convert_name(name: str) -> str:
 
 # recognize image
 def recognize_faces(image_location: str,
-                    model: str = MODEL_NAME,
+                    model: Optional[str] = None,
                     encodings_location: Path = DEFAULT_ENCODINGS_PATH
                     ) -> None:
     with encodings_location.open("rb") as f:
         loaded_encodings = pickle.load(f)
+        model = _resolve_model(loaded_encodings, model)
 
         input_image = face_recognition.load_image_file(image_location)
         input_face_locations = face_recognition.face_locations(input_image, model=model)
@@ -105,7 +107,25 @@ def _recognize_face(unknown_encoding, loaded_encodings):
         return votes.most_common(1)[0][0]
     return None
 
-def validate(model: str = MODEL_NAME):
+def _resolve_model(
+    loaded_encodings,
+    requested_model: Optional[str],
+) -> str:
+    trained_model = loaded_encodings.get("model")
+    if trained_model is None:
+        raise ValueError(
+            "Encodings are missing model metadata. Retrain with '--train' "
+            "and optionally '--model {hog|cnn}' before recognition."
+        )
+    if requested_model and requested_model != trained_model:
+        raise ValueError(
+            f"Encodings were trained with '{trained_model}' model. "
+            f"Use '--model {trained_model}' (or omit --model) for recognition, "
+            f"or retrain with '--train --model {requested_model}'."
+        )
+    return trained_model
+
+def validate(model: Optional[str] = None):
     for filepath in Path("validation").rglob("*"):
         if filepath.is_file():
             recognize_faces(
@@ -113,7 +133,7 @@ def validate(model: str = MODEL_NAME):
             )
 
 def recognize_video(
-    model: str = MODEL_NAME,
+    model: Optional[str] = None,
     encodings_location: Path = DEFAULT_ENCODINGS_PATH,
     source=0,  # 0 = webcam, or pass video file path
     process_every_n_frames: int = 4,
@@ -121,6 +141,7 @@ def recognize_video(
 ):
     with encodings_location.open("rb") as f:
         loaded_encodings = pickle.load(f)
+    model = _resolve_model(loaded_encodings, model)
 
     video_capture = cv2.VideoCapture(source)
     video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -224,16 +245,23 @@ def main():
     group.add_argument(
         "--webcam", action="store_true", help="Test the model with a webcam"
     )
+    parser.add_argument(
+        "--model",
+        choices=["hog", "cnn"],
+        default=None,
+        help=f"Face detection model. Training default is '{MODEL_NAME}'. "
+             "Recognition/validation/webcam must match training model.",
+    )
     args = parser.parse_args()
 
     if args.train:
-        encode_known_faces(model=MODEL_NAME)
+        encode_known_faces(model=args.model or MODEL_NAME)
     if args.validate:
-        validate(model=MODEL_NAME)
+        validate(model=args.model)
     if args.image:
-        recognize_faces(image_location=args.image, model=MODEL_NAME)
+        recognize_faces(image_location=args.image, model=args.model)
     if args.webcam:
-        recognize_video(model=MODEL_NAME)
+        recognize_video(model=args.model)
 
 if __name__ == "__main__":
     main()
