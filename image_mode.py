@@ -1,4 +1,4 @@
-yesfrom pathlib import Path
+from pathlib import Path
 
 import face_recognition
 from PIL import Image, ImageDraw
