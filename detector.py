@@ -23,7 +23,6 @@ def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAU
     encodings = []
 
     for path in Path("training").glob("*/*"):
-
         name = _convert_name(path.parent.name)
         image = face_recognition.load_image_file(path)
 
@@ -34,10 +33,10 @@ def encode_known_faces(model: str = MODEL_NAME, encodings_location: Path = DEFAU
             names.append(name)
             encodings.append(encoding)
 
-        name_encodings = {"names": names, "encodings": encodings}
+    name_encodings = {"names": names, "encodings": encodings}
 
-        with encodings_location.open("wb") as f:
-            pickle.dump(name_encodings, f)
+    with encodings_location.open("wb") as f:
+        pickle.dump(name_encodings, f)
 
 def _convert_name(name: str) -> str:
     return name.title().replace("_", " ")
