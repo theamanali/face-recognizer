@@ -1,0 +1,12 @@
+from pathlib import Path
+
+MODEL_NAME = "hog"
+TRAINING_DIR = Path("training")
+OUTPUT_DIR = Path("output")
+VALIDATION_DIR = Path("validation")
+DEFAULT_ENCODINGS_PATH = OUTPUT_DIR / "encodings.pkl"
+DEFAULT_TOLERANCE = 0.5
+DEFAULT_DETECTION_INTERVAL = 4
+DEFAULT_RECOGNITION_SCALE = 0.25
+BOUNDING_BOX_COLOR = "red"
+TEXT_COLOR = "black"
