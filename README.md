@@ -2,12 +2,12 @@
 
 A Python CLI for training and running face recognition with `face_recognition`, `dlib`, and `OpenCV`. 
 
-## Capabilities
+## Features
 
-- **Train encodings** from labeled images (`training/<person_name>/...`)
-- **Validate** model accuracy against a set of images in `validation/`
-- **Recognize faces** in a single image
-- **Run video recognition** with tunable performance controls
+- Train encodings from labeled images (`training/<person_name>/...`)
+- Validate model accuracy against a set of images in `validation/`
+- Recognize faces in a single image
+- Run video recognition with tunable performance controls
 
 ## Repository Structure
 
@@ -60,80 +60,47 @@ python detector.py --help
 ```
 
 ### Main Modes
+1. `--train` : Build encodings from labeled images in `training/<person_name>/` and write them to `output/encodings.pkl`.
+   ```bash
+   python detector.py --train
+     ```
+   - Optional flags:
 
- `--train` : Build encodings from labeled images in `training/<person_name>/` and write them to `output/encodings.pkl`.
-Usage: 
+     - `--model <hog|cnn>`: 
+Face detection backend for encoding. Default is `hog`. `hog` is faster on CPU, `cnn` is typically more accurate but much slower.
 
-```bash
-python detector.py --train --model hog
-```
 
-Optional flags:
+2. `--image <path>`: Recognize faces in a single image.
+    ```bash
+    python detector.py --image path/to/image.jpg
+    ```
+   - Optional flags:
+     - `--tolerance <float>`: 
+     Face match threshold. Lower is stricter, higher is looser. Default is 0.5. Acceptable values: `0 < value <= 1`
+     
 
-`--model <hog|cnn>`
+3. `--validate`: Run recognition on every image in `validation/` (useful for quick checks).
 
-Default: `hog`
+    ```bash
+    python detector.py --validate
+    ```
 
-Purpose: Face detection backend for encoding. `hog` is faster on CPU, `cnn` is typically more accurate but slower.
+   - Optional flags:
+     - `--tolerance <float>` (same as `--image`)
 
-`--image <path>`
 
-Recognize faces in a single image.
+4. `--webcam`: Run real-time recognition using your default camera.
 
-```bash
-python detector.py --image path/to/image.jpg --tolerance 0.5
-```
+    ```bash
+    python detector.py --webcam
+    ```
 
-Optional flags:
+   - Optional flags:
 
-`--tolerance <float>`
-
-Default: `0.6`
-
-Range: `0 < value <= 1`
-
-Purpose: Face match threshold. Lower is stricter, higher is looser.
-
-`--validate`
-
-Run recognition on every image in `validation/` (useful for quick checks).
-
-```bash
-python detector.py --validate --tolerance 0.5
-```
-
-Optional flags:
-
-`--tolerance <float>` (same as `--image`)
-
-`--webcam`
-
-Run real-time recognition using your default camera.
-
-```bash
-python detector.py --webcam --tolerance 0.5 --detection-interval 4 --recognition-scale 0.25
-```
-
-Optional flags:
-
-`--tolerance <float>` (same as `--image`)
-
-`--detection-interval <int>`
-
-Default: `5`
-
-Range: `value >= 1`
-
-Purpose: Detect faces every N frames and reuse locations in between. Higher values improve FPS but can miss fast movement.
-
-`--recognition-scale <float>`
-
-Default: `0.25`
-
-Range: `0 < value <= 1`
-
-Purpose: Downscale frames before recognition for speed. Lower values are faster but reduce accuracy on small or distant faces.
-
+     - `--tolerance <float>`
+     - `--detection-interval <int>`: Detect faces every N frames and reuse locations in between. Higher values improve FPS but can miss fast movement. Default is 4. Acceptable values: `value >= 1`
+     - `--recognition-scale <float>`: Downscale frames before recognition for speed. Lower values are faster but reduce accuracy on small or distant faces. Default is 0.25. Acceptable values: `0 < value <= 1`
+     
 ## Operational Notes
 
 - Person labels are derived from folder names (`john_doe` becomes `John Doe`).
